@@ -23,3 +23,14 @@ jobs:
           done
           docker logs reelai-smoke
           exit 1
+      - name: Render login and main app
+        run: |
+          docker exec reelai-smoke python -c '
+          from streamlit.testing.v1 import AppTest
+          app = AppTest.from_file("webui/Main.py").run(timeout=90)
+          assert not app.exception, app.exception
+          assert app.title[0].value == "ReelAI"
+          app.text_input[0].set_value("test-only")
+          app.button[0].click().run(timeout=90)
+          assert not app.exception, app.exception
+          '
