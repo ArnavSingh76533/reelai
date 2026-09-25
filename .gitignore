@@ -1,0 +1,11 @@
+/config.toml
+/config.toml.bak
+/storage/
+/models/
+/.venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+.DS_Store
+.pytest_cache/

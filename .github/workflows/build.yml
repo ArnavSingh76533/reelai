@@ -1,0 +1,25 @@
+name: Validate Docker Space
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t reelai-smoke .
+      - name: Start Streamlit and check health
+        run: |
+          docker run -d --name reelai-smoke -p 7860:7860 -e SPACE_ID=test/reelai -e REELAI_PASSWORD=test-only reelai-smoke
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:7860/_stcore/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs reelai-smoke
+          exit 1
