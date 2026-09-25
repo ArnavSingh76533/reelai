@@ -1778,6 +1778,19 @@ def get_all_fonts():
         for file in files:
             if file.endswith(".ttf") or file.endswith(".ttc"):
                 fonts.append(file)
+    if not fonts:
+        # A Space may have been synced without binary font assets. FFmpeg's
+        # system font remains available in our Docker image, so stage a copy
+        # inside resource/fonts (the video renderer only accepts this folder).
+        system_font = Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
+        if system_font.is_file():
+            try:
+                Path(font_dir).mkdir(parents=True, exist_ok=True)
+                fallback_font = Path(font_dir) / system_font.name
+                shutil.copyfile(system_font, fallback_font)
+                fonts.append(fallback_font.name)
+            except OSError as exc:
+                logger.warning(f"Could not stage the fallback subtitle font: {exc}")
     fonts.sort()
     return fonts
 
@@ -7468,6 +7481,9 @@ def _render_subtitle_settings(panel, params):
             _set_runtime_config("ui", "subtitle_enabled", params.subtitle_enabled)
             subtitle_settings_disabled = not params.subtitle_enabled
             font_names = get_all_fonts()
+            if not font_names:
+                st.error("No subtitle fonts are available. Check the Space's resource/fonts directory and rebuild the Docker image.")
+                st.stop()
             saved_font_name = config.ui.get(
                 "font_name", DEFAULT_SUBTITLE_SETTINGS["font_name"]
             )
