@@ -17,6 +17,7 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir --retries 3 -r requirements.txt
 COPY --chown=user:user . .
 RUN mkdir -p /app/storage /home/user/.cache \
+    && chown user:user /app \
     && chown -R user:user /app/storage /home/user/.cache
 
 USER user
