@@ -25,6 +25,8 @@ jobs:
           exit 1
       - name: Render login and main app
         run: |
+          # Reproduce a Space sync that omitted bundled font assets.
+          docker exec reelai-smoke sh -c 'mv /app/resource/fonts /app/resource/fonts.bak && mkdir /app/resource/fonts'
           docker exec reelai-smoke python -c '
           from streamlit.testing.v1 import AppTest
           app = AppTest.from_file("webui/Main.py").run(timeout=90)
@@ -34,3 +36,4 @@ jobs:
           app.button[0].click().run(timeout=90)
           assert not app.exception, app.exception
           '
+          docker exec reelai-smoke test -f /app/resource/fonts/DejaVuSans.ttf
